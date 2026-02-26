@@ -104,8 +104,16 @@ for item in vulnerabilities: # pour chaque vulnérabilité
         kev_status = 1
     else : kev_status = 0
 
+    # Score de priorisation 
+
+    # CVSS = gravité de l'impact --> sur 10 --> 
+    # EPSS = probabilité d’exploitation --> mettre sur 10
+    # KEV  = exploitation réelle confirmée --> mettre sur 10
+
     priority_score = (
-        (cvss * 0.5) + (epss * 10 * 0.3) + (kev_status * 2)
+        (cvss * 0.4) # 40% du poids car l'impact est à prioriser
+        + (epss * 10 * 0.3) # 30% du poids car la probabilité d'exploitation n'est pas négligeable
+        + (kev_status * 10 * 0.3) # si l'exploitation est confirmée, le poids augmente de 30%
     )
 
     # stockage dans la bdd vulnerabilities.db

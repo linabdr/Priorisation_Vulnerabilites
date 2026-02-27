@@ -1,0 +1,12 @@
+version: '1'
+
+services: 
+  
+  app:
+    build: .
+    volumes:
+      - ./logs:/var/log
+      - ./vulnerabilities.db:/app/vulnerabilities.db 
+    ports:
+      - "3000:3000"
+    restart: always

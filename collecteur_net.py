@@ -20,7 +20,7 @@ EPSS_URL = "https://api.first.org/data/v1/epss"
 # catalogue des vulnérabilités exploitées
 KEV_URL = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
 
-KEYWORD = ""#"ip camera"   # famille IoT choisie
+KEYWORD = "ip camera"   # famille IoT choisie
 nb_result = 20   # limiter pour test
 
 
@@ -40,13 +40,14 @@ CREATE TABLE IF NOT EXISTS vulnerabilities (
 )
 """)
 
+cursor.execute("DELETE FROM vulnerabilities")
 conn.commit() # sauvegarde
 
 # data kev
 print("Downloading KEV catalog...")
 kev_response = requests.get(KEV_URL) # permet de récupérer les données KEV (vulnérabilités exploitées)
 kev_data = kev_response.json() 
-kev_list = {item["cveID"] for item in kev_data["vulnerabilities"]} # recup des cveID
+kev_list = {item["cveID"] for item in kev_data["vulnerabilities"]} # permet de voir tous les id de vulnreabilites exploitees par les attaquants
 
 # nvd data
 print("Fetching CVEs from NVD...")
@@ -67,21 +68,26 @@ for item in vulnerabilities: # pour chaque vulnérabilité
     cve = item["cve"]
     cve_id = cve["id"]
     description = cve["descriptions"][0]["value"]
+    metrics = item["cve"].get("metrics", {})
 
     # extraction cvss
     try:
-        # cvss = item["cve"]["metrics"]["cvssMetricV31"][0]["cvssData"]["baseScore"]
-        # ici on prend la metriqueV3.1 car c'est lla plus recente
+        # ici on prend la metriqueV3.1 car c'est lla plus recente, si elle n'existe pas alors on prend les versions plus anciennes
         if "cvssMetricV31" in metrics:
+            # print("ok cvssMetric31")
             cvss = metrics["cvssMetricV31"][0]["cvssData"]["baseScore"]
 
         elif "cvssMetricV30" in metrics:
+            # print("ok cvssMetric30")
             cvss = metrics["cvssMetricV30"][0]["cvssData"]["baseScore"]
 
         elif "cvssMetricV2" in metrics:
+            # print("ok cvssMetric2")
             cvss = metrics["cvssMetricV2"][0]["cvssData"]["baseScore"]
-        print(cvss)
-    except:
+        # print(cvss)
+
+    except Exception as e:
+        # print(e)
         cvss = 0.0
 
     published_date = item["cve"]["published"]
@@ -98,8 +104,16 @@ for item in vulnerabilities: # pour chaque vulnérabilité
         kev_status = 1
     else : kev_status = 0
 
+    # Score de priorisation 
+
+    # CVSS = gravité de l'impact --> sur 10 --> 
+    # EPSS = probabilité d’exploitation --> mettre sur 10
+    # KEV  = exploitation réelle confirmée --> mettre sur 10
+
     priority_score = (
-        (cvss * 0.5) + (epss * 10 * 0.3) + (kev_status * 2)
+        (cvss * 0.4) # 40% du poids car l'impact est à prioriser
+        + (epss * 10 * 0.3) # 30% du poids car la probabilité d'exploitation n'est pas négligeable
+        + (kev_status * 10 * 0.3) # si l'exploitation est confirmée, le poids augmente de 30%
     )
 
     # stockage dans la bdd vulnerabilities.db
@@ -119,6 +133,7 @@ for item in vulnerabilities: # pour chaque vulnérabilité
     ))
 
     print(f"Stored {cve_id} | Priority: {round(priority_score,2)}")
+
 
 conn.commit()
 conn.close()

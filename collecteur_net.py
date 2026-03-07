@@ -226,43 +226,4 @@ for item in vulnerabilities: # pour chaque vulnérabilité
 conn.commit()
 conn.close()
 
-def export_to_json():
-    conn = sqlite3.connect("vulnerabilities.db")
-    cursor = conn.cursor()
-    
-    cursor.execute("""
-        SELECT v.cve_id, v.description, v.cvss_score, v.priority_score, v.type_vulnerabilite,
-               r.scenario_attaque, r.corrective, r.reduction_exposition, r.reduction_impact
-        FROM vulnerabilities v
-        LEFT JOIN recommandations r ON v.type_vulnerabilite = r.type_vulnerabilite
-        ORDER BY v.priority_score DESC
-    """)
-    
-    results = cursor.fetchall()
-    conn.close()
-    
-    vulns = []
-    for row in results:
-        vulns.append({
-            'cve_id': row[0],
-            'description': row[1],
-            'cvss_score': row[2],
-            'priority_score': row[3],
-            'type': row[4],
-            'recommandations': {
-                'scenario': row[5],
-                'corrective': row[6],
-                'exposition': row[7],
-                'impact': row[8]
-            }
-        })
-    
-    import json
-    with open('vulnerabilites_completes.json', 'w') as f:
-        json.dump(vulns, f, indent=2)
-    print("Fichier JSON généré: vulnerabilites_completes.json")
-
-export_to_json()
-# ===== FIN =====
-
 print("Collection completed successfully.")

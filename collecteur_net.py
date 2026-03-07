@@ -47,7 +47,7 @@ EPSS_URL = "https://api.first.org/data/v1/epss"
 KEV_URL = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
 
 KEYWORD = "ip camera"   # famille IoT choisie
-nb_result = 20   # limiter pour test
+nb_result = 100   # limiter pour test
 
 
 # on créé la base SQL 'vulnerabilities'
@@ -59,10 +59,12 @@ CREATE TABLE IF NOT EXISTS vulnerabilities (
     cve_id TEXT PRIMARY KEY,
     description TEXT,
     cvss_score REAL,
+    severity TEXT,
     epss_score REAL,
     kev_status INTEGER,
     published_date TEXT,
-    priority_score REAL
+    priority_score REAL,
+    type_vulnerabilite TEXT
 )
 """)
 cursor.execute("""
@@ -163,19 +165,23 @@ for item in vulnerabilities: # pour chaque vulnérabilité
         if "cvssMetricV31" in metrics:
             # print("ok cvssMetric31")
             cvss = metrics["cvssMetricV31"][0]["cvssData"]["baseScore"]
+            severity = metrics["cvssMetricV31"][0]["baseSeverity"]
 
         elif "cvssMetricV30" in metrics:
             # print("ok cvssMetric30")
             cvss = metrics["cvssMetricV30"][0]["cvssData"]["baseScore"]
+            severity = metrics["cvssMetricV31"][0]["baseSeverity"]
 
         elif "cvssMetricV2" in metrics:
             # print("ok cvssMetric2")
             cvss = metrics["cvssMetricV2"][0]["cvssData"]["baseScore"]
+            severity = metrics["cvssMetricV31"][0]["baseSeverity"]
         # print(cvss)
 
     except Exception as e:
         # print(e)
         cvss = 0.0
+        severity = ""
 
     published_date = item["cve"]["published"]
 
@@ -207,12 +213,13 @@ for item in vulnerabilities: # pour chaque vulnérabilité
 
     cursor.execute("""
     INSERT OR REPLACE INTO vulnerabilities
-    (cve_id, description, cvss_score, epss_score, kev_status, published_date, priority_score, type_vulnerabilite)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    (cve_id, description, cvss_score, severity ,epss_score, kev_status, published_date, priority_score, type_vulnerabilite)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         cve_id,
         description,
         cvss,
+        severity,
         epss,
         kev_status,
         published_date,
@@ -220,7 +227,7 @@ for item in vulnerabilities: # pour chaque vulnérabilité
         type_vuln  # ← Nouveau champ ajouté
     ))
 
-    print(f"Stored {cve_id} | Priority: {round(priority_score,2)}")
+    #print(f"Stored {cve_id} | Priority: {round(priority_score,2)}")
 
 
 conn.commit()

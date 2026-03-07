@@ -5,8 +5,34 @@
 
 import requests
 import sqlite3
-from datetime import datetime
+from datetime import datetime 
 
+# ===== FONCTION de mapping CVE → type =====
+def mapper_type_vulnerabilite(description, cve_id=""):
+    """
+    Associe une CVE à un type de vulnérabilité basé sur sa description
+    Retourne un type parmi une liste prédéfinie pour caméras IP
+    """
+    description = description.lower()
+    
+    # Règles de mapping simples
+    if any(kw in description for kw in ['authentication', 'bypass', 'login', 'credential', 'password']):
+        return "auth_bypass"
+    elif any(kw in description for kw in ['buffer overflow', 'memory corruption', 'heap', 'stack']):
+        return "buffer_overflow"
+    elif any(kw in description for kw in ['information disclosure', 'exposure', 'leak', 'sensitive']):
+        return "info_disclosure"
+    elif any(kw in description for kw in ['injection', 'command', 'sql']):
+        return "injection"
+    elif any(kw in description for kw in ['denial of service', 'dos', 'crash']):
+        return "dos"
+    elif any(kw in description for kw in ['default password', 'default credential', 'hardcoded']):
+        return "default_creds"
+    elif any(kw in description for kw in ['privilege escalation', 'privilege escalation']):
+        return "priv_escalation"
+    else:
+        return "autre"
+# ===== FIN DE LA FONCTION de mapping=====
 # CONFIG
 
 # base de vulnérabilité
@@ -39,7 +65,63 @@ CREATE TABLE IF NOT EXISTS vulnerabilities (
     priority_score REAL
 )
 """)
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS recommandations (
+    type_vulnerabilite TEXT PRIMARY KEY,
+    scenario_attaque TEXT,
+    corrective TEXT,
+    reduction_exposition TEXT,
+    reduction_impact TEXT
+)
+""")
 
+# Insérer les recommandations si la table est vide
+cursor.execute("SELECT COUNT(*) FROM recommandations")
+if cursor.fetchone()[0] == 0:
+    recommandations = [
+        ('auth_bypass',
+         'Un attaquant contourne le mécanisme d\'authentification et prend le contrôle à distance de la caméra',
+         'Mettre à jour le firmware vers la dernière version corrigeant le bypass',
+         'Isoler la caméra sur un VLAN IoT, bloquer les ports d\'administration en WAN',
+         'La caméra compromise ne peut pas accéder au reste du réseau (segmentation)'),
+        
+        ('buffer_overflow',
+         'Un attaquant exécute du code arbitraire à distance via un débordement mémoire',
+         'Appliquer le correctif du constructeur ou désactiver le service vulnérable',
+         'Restreindre l\'accès réseau au service concerné, utiliser un pare-feu applicatif',
+         'Surveiller les comportements anormaux et journaliser les accès'),
+        
+        ('info_disclosure',
+         'Des informations sensibles (flux vidéo, identifiants) sont exposées',
+         'Installer le patch de sécurité ou reconfigurer les paramètres de confidentialité',
+         'Chiffrer tous les flux (HTTPS pour l\'interface, RTSPS pour la vidéo), utiliser un VPN',
+         'Masquer automatiquement les visages dans les enregistrements si possible'),
+        
+        ('injection',
+         'Un attaquant injecte des commandes malveillantes via des entrées non filtrées',
+         'Nettoyer et valider toutes les entrées utilisateur, mettre à jour l\'application',
+         'Désactiver les interfaces d\'administration exposées à Internet',
+         'Appliquer le principe du moindre privilège sur les processus'),
+        
+        ('dos',
+         'La caméra devient indisponible, empêchant la surveillance',
+         'Appliquer les correctifs de stabilité, configurer le rate-limiting',
+         'Mettre en place une redondance (caméra de secours), utiliser du load balancing',
+         'Configurer des alertes de disponibilité pour réagir rapidement'),
+        
+        ('default_creds',
+         'Des identifiants par défaut non modifiés permettent un accès non autorisé',
+         'Forcer le changement des mots de passe à la première connexion',
+         'Désactiver les comptes par défaut, utiliser l\'authentification centralisée (LDAP/RADIUS)',
+         'Auditer régulièrement les comptes et leurs niveaux de privilège')
+    ]
+    
+    cursor.executemany("""
+        INSERT INTO recommandations
+        (type_vulnerabilite, scenario_attaque, corrective, reduction_exposition, reduction_impact)
+        VALUES (?, ?, ?, ?, ?)
+    """, recommandations)
+    
 cursor.execute("DELETE FROM vulnerabilities")
 conn.commit() # sauvegarde
 
@@ -68,7 +150,12 @@ for item in vulnerabilities: # pour chaque vulnérabilité
     cve = item["cve"]
     cve_id = cve["id"]
     description = cve["descriptions"][0]["value"]
+    
+    # ===== Détermination du type de vulnérabilité =====
+    type_vuln = mapper_type_vulnerabilite(description, cve_id)
+    
     metrics = item["cve"].get("metrics", {})
+    
 
     # extraction cvss
     try:
@@ -120,8 +207,8 @@ for item in vulnerabilities: # pour chaque vulnérabilité
 
     cursor.execute("""
     INSERT OR REPLACE INTO vulnerabilities
-    (cve_id, description, cvss_score, epss_score, kev_status, published_date, priority_score)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    (cve_id, description, cvss_score, epss_score, kev_status, published_date, priority_score, type_vulnerabilite)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         cve_id,
         description,
@@ -129,7 +216,8 @@ for item in vulnerabilities: # pour chaque vulnérabilité
         epss,
         kev_status,
         published_date,
-        priority_score
+        priority_score,
+        type_vuln  # ← Nouveau champ ajouté
     ))
 
     print(f"Stored {cve_id} | Priority: {round(priority_score,2)}")

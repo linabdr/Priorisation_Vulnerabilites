@@ -15,8 +15,14 @@ RUN python3 -m venv /app/.venv
 RUN /app/.venv/bin/python -m pip install --upgrade pip \
     && /app/.venv/bin/python -m pip install requests 
 
+# Run python script for init DB
+RUN /app/.venv/bin/python /app/python/getCVE.py
+
 #Copy NextJs files
 COPY prio_vuln/ /app/nextjs
+
+# Move vulnerabilities.db from /app/python/ to /app/nextjs/public/
+COPY /app/python/vulnerabilities.db /app/nextjs/public/
 
 WORKDIR /app/nextjs
 

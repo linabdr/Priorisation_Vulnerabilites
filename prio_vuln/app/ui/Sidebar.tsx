@@ -208,7 +208,7 @@ export default function Sidebar() {
                 {/*Selecteur type vuln*/}
                 <select
                     className="flex w-full px-3 py-2.5 text-heading text-xs border border-gray-200 rounded-md shadow-md placeholder:text-body"
-                    placeholder={"Choisir un type de vulnérabilité"}
+                    value={filters.typeVuln}
                     onChange={handleTypeVulnChange}
                 >
                     <option value="">

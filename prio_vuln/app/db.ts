@@ -92,5 +92,5 @@ export async function getRecommendation(typeVuln: string) {
     `;
 
     const result = db.prepare(query).get(typeVuln);
-    return result || null;
+    return result as any;
 }

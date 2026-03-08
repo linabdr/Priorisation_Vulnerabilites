@@ -21,7 +21,7 @@ interface CVECardsProps{
     cve: CVE;
 }
 
-interface recommandation {
+interface Recommandation {
     type_vulnerabilite: string,
     scenario_attaque: string,
     corrective: string,
@@ -31,7 +31,7 @@ interface recommandation {
 
 export default function CVECards({cve}: CVECardsProps){
     const [isExpanded, setIsExpanded] = useState(false);
-    const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
+    const [recommendation, setRecommendation] = useState<Recommandation | null>(null);
     const [loading, setLoading] = useState(false);
 
 

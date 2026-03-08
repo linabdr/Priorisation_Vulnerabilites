@@ -20,11 +20,11 @@ Ce projet s'inscrit dans le cours de Cybersécurité de l'IoT 8INF917. Il vise �
 ## Technologie
 
 Les technologies utilisées pour le développement de ce projet sont:
-- NextJS: Framework de React qui nous permet de faire une webapp full-stack rapidement. 
-- Python: Utilisé pour récupérer les vulnérabilités via les APIs des différentes sources, ainsi que le traitement et le stockage dans un .db
-- SQLite3: Utilisé pour stocker nos deux tables: "vulnerabilities" et "recommandations"
-- Docker: Utilisé pour containeriser l'application, ce qui permet une meilleure portabilité, ainsi qu'une facilité d'installation
-- Cron: Utilisé pour exéctuer toutes les heures le script Python de récupération des vulnérabilités
+- **NextJS**: Framework de React qui nous permet de faire une webapp full-stack rapidement. 
+- **Python**: Utilisé pour récupérer les vulnérabilités via les APIs des différentes sources, ainsi que le traitement et le stockage dans un .db
+- **SQLite3**: Utilisé pour stocker nos deux tables: "vulnerabilities" et "recommandations"
+- **Docker**: Utilisé pour containeriser l'application, ce qui permet une meilleure portabilité, ainsi qu'une facilité d'installation
+- **Cron**: Utilisé pour exéctuer toutes les heures le script Python de récupération des vulnérabilités
 
 ---
 

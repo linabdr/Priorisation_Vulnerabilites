@@ -15,7 +15,8 @@ interface FilterState {
     sortBy: string,
     sortOrder: 'asc' | 'desc',
     doesUse: boolean,
-    severity: string[]
+    severity: string[],
+    typeVuln: string
 }
 
 export default function Sidebar() {
@@ -30,7 +31,8 @@ export default function Sidebar() {
         sortBy: searchParams.get('sortBy') || 'published_date',
         sortOrder: (searchParams.get('sortorder') as 'asc' | 'desc') || 'desc',
         doesUse: false,
-        severity: searchParams.get('severity')?.split(',') || ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
+        severity: searchParams.get('severity')?.split(',') || ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'],
+        typeVuln: searchParams.get('typeVuln') || ''
     });
 
     useEffect(() => {
@@ -43,6 +45,9 @@ export default function Sidebar() {
         params.set('doesUse', filters.doesUse.toString());
         if (filters.severity.length > 0 && filters.severity.length < 4) {
             params.set('severity', filters.severity.join(','));
+        }
+        if (filters.typeVuln) {
+            params.set('typeVuln', filters.typeVuln);
         }
 
         //debouncing: on attend qu'il n'y ai plus d'action utilisation pdt 300ms ==> s'assurer que les filtres sont fini de selectionner
@@ -82,6 +87,11 @@ export default function Sidebar() {
     const handleSortChange = (field: string) => {
         setFilters(prev => ({...prev, sortBy: field, sortOrder: prev.sortBy === field && prev.sortOrder === 'asc' ? 'desc' : 'asc'}));
     }
+
+    //SELECT VULN TYPe
+    const handleTypeVulnChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setFilters(prev => ({ ...prev, typeVuln: e.target.value }));
+    };
 
     // SEVERITE
     const handleSeverityChange = (severity: string, checked: boolean) => {
@@ -185,7 +195,7 @@ export default function Sidebar() {
                     </div>
                 </section>
 
-                {/* Checkbox */}
+                {/* Checkbox faille exploité */}
                 <section className="space-y-4 pt-4 border-t border-gray-200">
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">N'afficher que:</h3>
                 <div className="space-y-2">
@@ -194,6 +204,23 @@ export default function Sidebar() {
                     checked={filters.doesUse}
                     onChange={handleCheckboxChange} />
                 </div>
+
+                {/*Selecteur type vuln*/}
+                <select
+                    className="flex w-full px-3 py-2.5 text-heading text-xs border border-gray-200 rounded-md shadow-md placeholder:text-body"
+                    placeholder={"Choisir un type de vulnérabilité"}
+                    onChange={handleTypeVulnChange}
+                >
+                    <option value="">
+                        Choisir un type de vulnérabilité
+                    </option>
+                    <option value="injection">Injection</option>
+                    <option value="auth_bypass">Authentification bypass</option>
+                    <option value="buffer_overflow">Buffer overflow</option>
+                    <option value="autre">Autres</option>
+                </select>
+
+                {/* Checkbox pour Sévérité*/}
                 <div className="flex items-center gap-2 text-gray-400 font-medium text-sm">
                     <span>Sévérité</span>
                 </div>

@@ -30,6 +30,7 @@ export default async function Page(
     page: params.page ? parseInt(params.page as string) : 1,
     limit: params.limit ? parseInt(params.limit as string) : 20,
     severity: params.severity ? (params.severity as string).split(',') : ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'],
+    typeVuln: (params.typeVuln as string) || '',
 
   };
   const resCVE = await getCVEs(filters);

@@ -7,6 +7,7 @@ if(count.count === 0) {
     console.log("erreur: la bdd est vide");
 }
 
+// Récup CVE dans table vulnerabilities
 export default async function getCVEs(filters: any){
     let query = "SELECT cve_id as id, cve_id, description, cvss_score, severity, epss_score, kev_status, published_date, priority_score, type_vulnerabilite FROM vulnerabilities WHERE 1=1";
     const params: any[]=[];
@@ -39,6 +40,11 @@ export default async function getCVEs(filters: any){
         params.push(...filters.severity);
     }
 
+    // Select Vuln type
+    if (filters.typeVuln) {
+        query += ' AND type_vulnerabilite = ?';
+        params.push(filters.typeVuln);
+    }
 
     // Tri
     if (filters.sortBy) {
@@ -75,4 +81,16 @@ export default async function getCVEs(filters: any){
             totalPage: Math.ceil(total / limit)
         }
     };
+}
+
+// Récup les recommandation dans la table recommandation
+export async function getRecommendation(typeVuln: string) {
+    const query = `
+    SELECT * FROM recommandations
+    WHERE type_vulnerabilite = ?
+    LIMIT 1
+    `;
+
+    const result = db.prepare(query).get(typeVuln);
+    return result || null;
 }

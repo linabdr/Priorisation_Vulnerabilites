@@ -153,35 +153,34 @@ for item in vulnerabilities: # pour chaque vulnérabilité
     cve_id = cve["id"]
     description = cve["descriptions"][0]["value"]
     
-    # ===== Détermination du type de vulnérabilité =====
+    # Détermination du type de vulnérabilité ici
     type_vuln = mapper_type_vulnerabilite(description, cve_id)
     
     metrics = item["cve"].get("metrics", {})
     
-
     # extraction cvss
     try:
         # ici on prend la metriqueV3.1 car c'est lla plus recente, si elle n'existe pas alors on prend les versions plus anciennes
+        severity = ""
+
         if "cvssMetricV31" in metrics:
-            # print("ok cvssMetric31")
-            cvss = metrics["cvssMetricV31"][0]["cvssData"]["baseScore"]
-            severity = metrics["cvssMetricV31"][0]["baseSeverity"]
+            cvss_data = metrics["cvssMetricV31"][0]["cvssData"]
+            cvss = cvss_data.get("baseScore", 0)
+            severity = cvss_data.get("baseSeverity", "")
 
         elif "cvssMetricV30" in metrics:
-            # print("ok cvssMetric30")
-            cvss = metrics["cvssMetricV30"][0]["cvssData"]["baseScore"]
-            severity = metrics["cvssMetricV31"][0]["baseSeverity"]
+            cvss_data = metrics["cvssMetricV30"][0]["cvssData"]
+            cvss = cvss_data.get("baseScore", 0)
+            severity = cvss_data.get("baseSeverity", "")
 
         elif "cvssMetricV2" in metrics:
-            # print("ok cvssMetric2")
-            cvss = metrics["cvssMetricV2"][0]["cvssData"]["baseScore"]
-            severity = metrics["cvssMetricV31"][0]["baseSeverity"]
-        # print(cvss)
-
+            cvss_data = metrics["cvssMetricV2"][0]["cvssData"]
+            cvss = cvss_data.get("baseScore", 0)
+            severity = ""
+            
     except Exception as e:
-        # print(e)
+        print(e)
         cvss = 0.0
-        severity = ""
 
     published_date = item["cve"]["published"]
 

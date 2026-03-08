@@ -33,7 +33,7 @@ export default async function getCVEs(filters: any){
         query += ' AND kev_status = 1';
     }
 
-    // Filtrage
+    // Tri
     if (filters.sortBy) {
         const validSorts = ['cvss_score', 'epss_score', 'kev_status', 'published_date'];
         if (validSorts.includes(filters.sortBy)) {
@@ -43,8 +43,29 @@ export default async function getCVEs(filters: any){
         query += ' ORDER BY id DESC';
     }
 
-    console.log("Query générée:", query);
-    console.log("Params:", params);
+    // Calc nombre de CVE avec filtres
+    const countQuery = 'SELECT COUNT(*) as total FROM vulnerabilities WHERE 1=1' + query.substring(query.indexOf('WHERE 1=1')+9).split('ORDER BY')[0];
 
-    return db.prepare(query).all(...params);
+    const totalResult = db.prepare(countQuery).get(...params) as { total: number};
+    const total = totalResult.total;
+
+    // Pagination
+    const page = filters.page || 1;
+    const limit = filters.limit || 20;
+    const offset = (page - 1)*limit;
+
+    query += ' LIMIT ? OFFSET ?';
+    params.push(limit, offset);
+
+    const res = db.prepare(query).all(...params);
+
+    return {
+        data: res,
+        pagination: {
+            page,
+            limit,
+            total,
+            totalPage: Math.ceil(total / limit)
+        }
+    };
 }

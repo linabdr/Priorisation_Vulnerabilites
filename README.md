@@ -8,7 +8,7 @@
 
 ---
 
-## Contexte et Objectif
+## Contexte et Objectif
 
 Ce projet consiste à réaliser une plateforme web qui permet d'informer les utilisateurs sur les vulnérabilités pertinentes sur les caméras IP.
 Les vulnérabilités sont récupérées automatiquement à partir des sources du NIST, FIRST et du CISA.

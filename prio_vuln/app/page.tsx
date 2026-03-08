@@ -16,7 +16,7 @@ interface CVE {
 }
 
 export default async function Page(
-  { searchParams }:{searchParams: Promise<{ [key: string]: string | string[] | undefined}>;}
+  { searchParams }:{searchParams: Promise<{ [key: string]: string | string[] | boolean | undefined}>;}
 ){
   const params = await searchParams;
   const filters = {
@@ -25,6 +25,7 @@ export default async function Page(
     maxScore: params.maxScore ? parseFloat(params.maxScore as string) : undefined,
     sortBy: (params.sortBy as string) || 'published_date',
     sortOrder: (params.sortOrder as 'asc' | 'desc') || 'desc',
+    doesUse: params.doesUse === "true",
   };
   const cves = await getCVEs(filters);
   return(
@@ -42,9 +43,9 @@ export default async function Page(
               </header>
 
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                  {cves.map((cve: any) => (
-                      <CVECards key={cve.id} cve={cve} />
-                  ))}
+                  {cves.map((cve: any) => {
+                      return <CVECards key={cve.id} cve={cve} />
+                  })}
 
                   {cves.length === 0 && (
                       <div className="col-span-full flex flex-col items-center justify-center h-64 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">

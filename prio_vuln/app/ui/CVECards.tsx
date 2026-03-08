@@ -17,7 +17,7 @@ interface CVE {
 }
 
 interface CVECardsProps{
-    cve: CVE
+    cve: CVE;
 }
 
 export default function CVECards({cve}: CVECardsProps){
@@ -32,6 +32,7 @@ export default function CVECards({cve}: CVECardsProps){
         animate={{ opacity: 1, y: 0 }}
         className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow"
         >
+
             <div className="flex justify-between items-start mb-4">
                 <h3 className="text-xl font-bold text-gray-900 font-mono tracking-tight">
                     {cve.cve_id}

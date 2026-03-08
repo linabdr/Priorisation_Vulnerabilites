@@ -8,7 +8,7 @@ if(count.count === 0) {
 }
 
 export default async function getCVEs(filters: any){
-    let query = "SELECT * FROM vulnerabilities WHERE 1=1";
+    let query = "SELECT cve_id as id, cve_id, description, cvss_score, severity, epss_score, kev_status, published_date, priority_score, type_vulnerabilite FROM vulnerabilities WHERE 1=1";
     const params: any[]=[];
 
     // Bar de recherche = ajout mots dans le requete sql qui cherche correspondance dans description ou cve_id
@@ -28,6 +28,11 @@ export default async function getCVEs(filters: any){
         params.push(filters.maxScore);
     }
 
+    // Checkbox
+    if(filters.doesUse){
+        query += ' AND kev_status = 1';
+    }
+
     // Filtrage
     if (filters.sortBy) {
         const validSorts = ['cvss_score', 'epss_score', 'kev_status', 'published_date'];
@@ -37,6 +42,9 @@ export default async function getCVEs(filters: any){
     } else {
         query += ' ORDER BY id DESC';
     }
+
+    console.log("Query générée:", query);
+    console.log("Params:", params);
 
     return db.prepare(query).all(...params);
 }

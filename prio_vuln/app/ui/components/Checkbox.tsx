@@ -18,7 +18,7 @@ export function Checkbox({ label, checked, onChange, className, ...props }: Chec
         />
         {checked && <Check size={14} className="text-white" strokeWidth={3} />}
         </div>
-        <span className="text-sm text-gray-700 group-hover:text-gray-900">{label}</span>
+        <span className="text-xs text-gray-700 group-hover:text-gray-900">{label}</span>
         </label>
     );
 }

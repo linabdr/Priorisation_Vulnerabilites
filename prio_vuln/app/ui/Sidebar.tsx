@@ -7,24 +7,28 @@ import { Input } from './components/Input';
 import { Slider } from './components/Slider';
 import { Checkbox } from './components/Checkbox';
 
+//FILTES
 interface FilterState {
     search: string,
     minScore: number,
     maxScore: number,
     sortBy: string,
-    sortOrder: 'asc' | 'desc'
+    sortOrder: 'asc' | 'desc',
+    doesUse: boolean
 }
 
 export default function Sidebar() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
+    //FILTRES
     const [filters, setFilters] = useState<FilterState>({
         search: searchParams.get('search') || '',
         minScore: parseFloat(searchParams.get('minScore') as string) || 0,
         maxScore: parseFloat(searchParams.get('maxScore') as string) || 10,
         sortBy: searchParams.get('sortBy') || 'published_date',
-        sortOrder: (searchParams.get('sortorder') as 'asc' | 'desc') || 'desc'
+        sortOrder: (searchParams.get('sortorder') as 'asc' | 'desc') || 'desc',
+        doesUse: false
     });
 
     useEffect(() => {
@@ -34,6 +38,7 @@ export default function Sidebar() {
         params.set('maxScore', filters.maxScore.toString());
         params.set('sortBy', filters.sortBy);
         params.set('sortOrder', filters.sortOrder);
+        params.set('doesUse', filters.doesUse.toString());
 
         //debouncing: on attend qu'il n'y ai plus d'action utilisation pdt 300ms ==> s'assurer que les filtres sont fini de selectionner
         const timeoutId = setTimeout(() => {
@@ -59,6 +64,14 @@ export default function Sidebar() {
         setFilters(prev => ({ ...prev, search: e.target.value }));
     };
 
+    // -- CHECKBOXs
+
+    // doesUse === N'affiche que les CVE qui sont exploité en ce moment, KEV=1
+    const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const checked = e.target.checked;
+        setFilters(prev => ({ ...prev, doesUse: checked }));
+        //fetchCVEs({ ...filters, doesUse: checked }); // Appeler la fonction pour effectuer la requête SQL
+    };
 
 
     return (
@@ -111,7 +124,10 @@ export default function Sidebar() {
                 <section className="space-y-4 pt-4 border-t border-gray-200">
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Other Filters</h3>
                 <div className="space-y-2">
-                <Checkbox label="N'afficher que les vulnérabilités exploitées" checked={false} onChange={() => {}} />
+                <Checkbox
+                    label="aaaaaaaaaaaaaaaaa"
+                    checked={filters.doesUse}
+                    onChange={handleCheckboxChange} />
                 </div>
                 </section>
                 {/* Trie */}

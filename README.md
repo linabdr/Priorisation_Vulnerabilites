@@ -4,7 +4,7 @@
 # Réalisé par
 - **Lina Bader**
 - **Maxime Bintein**
-- **Oum el kheir Righi*
+- **Oum el kheir Righi**
 
 ---
 

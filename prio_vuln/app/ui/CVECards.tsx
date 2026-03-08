@@ -1,5 +1,5 @@
 'use client'
-import { ShieldAlert, Activity, BarChart3, Calendar } from 'lucide-react';
+import { ShieldAlert, Activity, BarChart3, Calendar, ClockAlert } from 'lucide-react';
 import { motion } from 'motion/react';
 
 
@@ -42,9 +42,10 @@ export default function CVECards({cve}: CVECardsProps){
                 {cve.description}
             </p>
 
-            <div className="grid grid-cols-3 gap-4 border-t border-gray-100 pt-4">
+            <div className="grid grid-cols-4 gap-4 border-t border-gray-100 pt-4">
                 <ScoreMetric label="Score CVSS" value={cve.cvss_score} icon={<ShieldAlert size={16} />} />
                 <ScoreMetric label="Score EPPS" value={cve.epss_score} icon={<Activity size={16} />} />
+                <ScoreMetric label="Score de priorité" value={cve.priority_score} icon={<ClockAlert size={16}/>}/>
                 <div className="flex flex-col">
                     <div className="flex items-center gap-1.5 text-gray-500 mb-1">
                     <span className="text-[10px] font-bold uppercase tracking-wider">Status KEV</span>

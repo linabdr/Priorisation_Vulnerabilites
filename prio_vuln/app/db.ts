@@ -33,9 +33,16 @@ export default async function getCVEs(filters: any){
         query += ' AND kev_status = 1';
     }
 
+    if (filters.severity && filters.severity.length > 0 && filters.severity.length < 4) {
+        const placeholders = filters.severity.map(() => '?').join(',');
+        query += ` AND severity IN (${placeholders})`;
+        params.push(...filters.severity);
+    }
+
+
     // Tri
     if (filters.sortBy) {
-        const validSorts = ['cvss_score', 'epss_score', 'kev_status', 'published_date'];
+        const validSorts = ['cvss_score', 'epss_score', 'priority_score', 'published_date'];
         if (validSorts.includes(filters.sortBy)) {
             query += ` ORDER BY ${filters.sortBy} ${filters.sortOrder === 'asc' ? 'ASC' : 'DESC'}`;
         }

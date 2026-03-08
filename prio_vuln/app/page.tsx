@@ -27,6 +27,10 @@ export default async function Page(
     sortBy: (params.sortBy as string) || 'published_date',
     sortOrder: (params.sortOrder as 'asc' | 'desc') || 'desc',
     doesUse: params.doesUse === "true",
+    page: params.page ? parseInt(params.page as string) : 1,
+    limit: params.limit ? parseInt(params.limit as string) : 20,
+    severity: params.severity ? (params.severity as string).split(',') : ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'],
+
   };
   const resCVE = await getCVEs(filters);
   return(

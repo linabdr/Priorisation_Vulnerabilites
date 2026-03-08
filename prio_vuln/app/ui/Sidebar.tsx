@@ -14,7 +14,8 @@ interface FilterState {
     maxScore: number,
     sortBy: string,
     sortOrder: 'asc' | 'desc',
-    doesUse: boolean
+    doesUse: boolean,
+    severity: string[]
 }
 
 export default function Sidebar() {
@@ -28,7 +29,8 @@ export default function Sidebar() {
         maxScore: parseFloat(searchParams.get('maxScore') as string) || 10,
         sortBy: searchParams.get('sortBy') || 'published_date',
         sortOrder: (searchParams.get('sortorder') as 'asc' | 'desc') || 'desc',
-        doesUse: false
+        doesUse: false,
+        severity: searchParams.get('severity')?.split(',') || ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
     });
 
     useEffect(() => {
@@ -39,6 +41,9 @@ export default function Sidebar() {
         params.set('sortBy', filters.sortBy);
         params.set('sortOrder', filters.sortOrder);
         params.set('doesUse', filters.doesUse.toString());
+        if (filters.severity.length > 0 && filters.severity.length < 4) {
+            params.set('severity', filters.severity.join(','));
+        }
 
         //debouncing: on attend qu'il n'y ai plus d'action utilisation pdt 300ms ==> s'assurer que les filtres sont fini de selectionner
         const timeoutId = setTimeout(() => {
@@ -73,11 +78,37 @@ export default function Sidebar() {
         //fetchCVEs({ ...filters, doesUse: checked }); // Appeler la fonction pour effectuer la requête SQL
     };
 
+    // TRI
+    const handleSortChange = (field: string) => {
+        setFilters(prev => ({...prev, sortBy: field, sortOrder: prev.sortBy === field && prev.sortOrder === 'asc' ? 'desc' : 'asc'}));
+    }
+
+    // SEVERITE
+    const handleSeverityChange = (severity: string, checked: boolean) => {
+        setFilters(prev => {
+            let updated: string[];
+            if (checked) {
+                // Ajoute la sévérité si cochée
+                updated = [...prev.severity, severity];
+            } else {
+                // Retire la sévérité si décochée
+                updated = prev.severity.filter(s => s !== severity);
+            }
+
+            // Si aucune cochée, garde au moins un tableau vide ou force toutes
+            if (updated.length === 0) {
+                updated = []; // Ou ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] si tu veux forcer au moins une
+            }
+
+            return { ...prev, severity: updated };
+        });
+    };
+
 
     return (
         <aside className="w-80 bg-gray-50 border-r border-gray-200 h-screen flex flex-col fixed left-0 top-0 overflow-y-auto">
             {/* Header */}
-            <div className="p-6 border-b border-gray-200 bg-white sticky top-0 z-10">
+            <div className="p-4 border-b border-gray-200 bg-white sticky top-0 z-10">
                 <div className="flex items-stretch gap-2 mb-1">
                     <h1 className="text-lg font-bold text--900 tracking-tight">Vulnerabilites Priorisation</h1>
                 </div>
@@ -120,27 +151,107 @@ export default function Sidebar() {
                     </div>
                 </section>
 
+                {/* Tri */}
+                <section className="space-y-3">
+                    <div className="flex items-center gap-2 text-gray-900 font-medium text-sm">
+                        <ArrowUpDown size={16} />
+                        <span>Trier par</span>
+                    </div>
+                    <div className="space-y-2">
+                        <SortOption
+                        label="Score CVSS"
+                        active={filters.sortBy === 'cvss_score'}
+                        order={filters.sortOrder}
+                        onClick={() => handleSortChange('cvss_score')}
+                        />
+                        <SortOption
+                        label="Score EPSS"
+                        active={filters.sortBy === 'evss_score'}
+                        order={filters.sortOrder}
+                        onClick={() => handleSortChange('evss_score')}
+                        />
+                        <SortOption
+                        label="Score de priorité"
+                        active={filters.sortBy === 'priority_score'}
+                        order={filters.sortOrder}
+                        onClick={() => handleSortChange('priority_score')}
+                        />
+                        <SortOption
+                        label="Date de parution"
+                        active={filters.sortBy === 'published_date'}
+                        order={filters.sortOrder}
+                        onClick={() => handleSortChange('published_date')}
+                        />
+                    </div>
+                </section>
+
                 {/* Checkbox */}
                 <section className="space-y-4 pt-4 border-t border-gray-200">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Other Filters</h3>
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">N'afficher que:</h3>
                 <div className="space-y-2">
                 <Checkbox
-                    label="aaaaaaaaaaaaaaaaa"
+                    label="Les failles exploitées"
                     checked={filters.doesUse}
                     onChange={handleCheckboxChange} />
                 </div>
-                </section>
-                {/* Trie */}
-                <section>
+                <div className="flex items-center gap-2 text-gray-400 font-medium text-sm">
+                    <span>Sévérité</span>
+                </div>
+                <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm space-y-3">
+                    <Checkbox
+                    label="CRITICAL"
+                    checked={filters.severity.includes('CRITICAL')}
+                    onChange={(e) => handleSeverityChange('CRITICAL', e.target.checked)}
+                    className="text-red-700"
+                    />
+                    <Checkbox
+                    label="HIGH"
+                    checked={filters.severity.includes('HIGH')}
+                    onChange={(e) => handleSeverityChange('HIGH', e.target.checked)}
+                    className="text-orange-700"
+                    />
+                    <Checkbox
+                    label="MEDIUM"
+                    checked={filters.severity.includes('MEDIUM')}
+                    onChange={(e) => handleSeverityChange('MEDIUM', e.target.checked)}
+                    className="text-yellow-700"
+                    />
+                    <Checkbox
+                    label="LOW"
+                    checked={filters.severity.includes('LOW')}
+                    onChange={(e) => handleSeverityChange('LOW', e.target.checked)}
+                    className="text-green-700"
+                    />
+                </div>
                 </section>
             </div>
 
             {/* Footer */}
             <div className="p-4 border-t border-gray-200 text-xs text-gray-400 text-center">
-            Projet du cours de cybersécurité dans l'IoT
+            Projet du cours 8INF917
             <p>Lina Bader - Maxime Bintein - Oum el kheir Righi</p>
             </div>
 
         </aside>
+    );
+}
+
+function SortOption({ label, active, order, onClick }: { label: string, active: boolean, order: 'asc' | 'desc', onClick: () => void }) {
+    return (
+        <button
+        onClick={onClick}
+        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+            active
+            ? 'bg-indigo-50 text-indigo-700 font-medium'
+            : 'text-gray-600 hover:bg-gray-100'
+        }`}
+        >
+        <span>{label}</span>
+        {active && (
+            <span className="text-xs uppercase font-bold tracking-wider">
+            {order === 'asc' ? 'Low → High' : 'High → Low'}
+            </span>
+        )}
+        </button>
     );
 }

@@ -14,6 +14,7 @@ export function Slider({ label, value, min = 0, max = 10, step = 0.1, onChange, 
             <div className="flex justify-between">
             <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">{label}</label>
             <span className="text-xs font-mono text-gray-900">{value}</span>
+
             </div>
         )}
         <input

@@ -228,6 +228,28 @@ for item in vulnerabilities: # pour chaque vulnérabilité
 
     #print(f"Stored {cve_id} | Priority: {round(priority_score,2)}")
 
+print("Generate index for vulnerabilities table")
+# Optimisation en créant des index sur les colonnes
+cursor.execute("""
+CREATE INDEX IF NOT EXISTS idx_cvss_score ON vulnerabilities(cvss_score);
+""")
+cursor.execute("""
+CREATE INDEX IF NOT EXISTS idx_severity ON vulnerabilities(severity);
+""")
+cursor.execute("""
+CREATE INDEX IF NOT EXISTS idx_kev_status ON vulnerabilities(kev_status);
+""")
+cursor.execute("""
+CREATE INDEX IF NOT EXISTS idx_published_date ON vulnerabilities(published_date);
+""")
+cursor.execute("""
+CREATE INDEX IF NOT EXISTS idx_priority_score ON vulnerabilities(priority_score);
+""")
+cursor.execute("""
+CREATE INDEX IF NOT EXISTS idx_cve_id ON vulnerabilities(cve_id);
+""")
+
+# Pour l'optimisation de la recherche => possibilité de crée une table fts5 (full text search)
 
 conn.commit()
 conn.close()

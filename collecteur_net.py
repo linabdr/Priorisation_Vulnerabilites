@@ -7,7 +7,7 @@ import requests
 import sqlite3
 from datetime import datetime 
 
-# ===== FONCTION de mapping CVE → type =====
+# fonction de mapping CVE → type
 def mapper_type_vulnerabilite(description, cve_id=""):
     """
     Associe une CVE à un type de vulnérabilité basé sur sa description
@@ -164,19 +164,19 @@ for item in vulnerabilities: # pour chaque vulnérabilité
         severity = ""
 
         if "cvssMetricV31" in metrics:
-            cvss_data = metrics["cvssMetricV31"][0]["cvssData"]
-            cvss = cvss_data.get("baseScore", 0)
-            severity = cvss_data.get("baseSeverity", "")
+            metric = metrics["cvssMetricV31"][0]
+            cvss = metric["cvssData"].get("baseScore", 0)
+            severity = metric["cvssData"].get("baseSeverity", "")
 
         elif "cvssMetricV30" in metrics:
-            cvss_data = metrics["cvssMetricV30"][0]["cvssData"]
-            cvss = cvss_data.get("baseScore", 0)
-            severity = cvss_data.get("baseSeverity", "")
+            metric = metrics["cvssMetricV30"][0]
+            cvss = metric["cvssData"].get("baseScore", 0)
+            severity = metric["cvssData"].get("baseSeverity", "")
 
         elif "cvssMetricV2" in metrics:
-            cvss_data = metrics["cvssMetricV2"][0]["cvssData"]
-            cvss = cvss_data.get("baseScore", 0)
-            severity = ""
+            metric = metrics["cvssMetricV2"][0]
+            cvss = metric["cvssData"].get("baseScore", 0)
+            severity = metric.get("baseSeverity", "")
             
     except Exception as e:
         print(e)

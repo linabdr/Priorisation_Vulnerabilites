@@ -1,5 +1,6 @@
 import Sidebar from "./ui/Sidebar"
 import CVECards from "./ui/CVECards"
+import Pagination from "./ui/Pagination"
 import getCVEs from "./db"
 
 interface CVE {
@@ -27,7 +28,7 @@ export default async function Page(
     sortOrder: (params.sortOrder as 'asc' | 'desc') || 'desc',
     doesUse: params.doesUse === "true",
   };
-  const cves = await getCVEs(filters);
+  const resCVE = await getCVEs(filters);
   return(
     <div className="min-h-screen bg-gray-100 font-sans text-gray-900 flex">
       <Sidebar/>
@@ -35,25 +36,34 @@ export default async function Page(
               <header className="mb-8 flex justify-between items-end">
                   <div>
                       <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Vulnerability Database</h2>
-                      <p className="text-gray-500 mt-2">Showing {cves.length} results based on current filters</p>
+                      <p className="text-gray-500 mt-2">Affichage de {resCVE.data.length} CVE(s) sur {resCVE.pagination.total} page(s) selon vos filtres</p>
                   </div>
                   <div className="text-sm text-gray-400 font-mono">
-                      Last updated: {new Date().toLocaleDateString()}
+                      Dernière mise à jour: {new Date().toLocaleDateString("en-DE")}
                   </div>
               </header>
 
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                  {cves.map((cve: any) => {
+              <div className="grid grid-cols-1 gap-6">
+                  {resCVE.data.map((cve: any) => {
                       return <CVECards key={cve.id} cve={cve} />
                   })}
 
-                  {cves.length === 0 && (
+                  {resCVE.data.length === 0 && (
                       <div className="col-span-full flex flex-col items-center justify-center h-64 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
-                          <p>No CVEs found matching your criteria.</p>
+                          <p>Aucune CVE(s) trouver selon vos filtres.</p>
                       </div>
                   )}
               </div>
-          </main>
+              <footer>
+                {resCVE.data.length > 0 && (
+                  <Pagination
+                    currentPage={resCVE.pagination.page}
+                    totalPages={resCVE.pagination.totalPage}
+                    total={resCVE.pagination.total}
+                  />
+                )}
+              </footer>
+            </main>
 
     </div>
 

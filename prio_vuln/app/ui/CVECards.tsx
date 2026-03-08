@@ -27,11 +27,7 @@ export default function CVECards({cve}: CVECardsProps){
         if(score >= 4.0) return 'text-yellow-700 bg-yellow-70 border-yellow-250'; //severité faible == jaune
     }
     return (
-        <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow"
-        >
+        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.01]">
 
             <div className="flex justify-between items-start mb-4">
                 <h3 className="text-xl font-bold text-gray-900 font-mono tracking-tight">
@@ -61,7 +57,7 @@ export default function CVECards({cve}: CVECardsProps){
                 <Calendar size={14} className="mr-2" />
                 Published: {cve.published_date}
             </div>
-        </motion.div>
+        </div>
     );
 }
 function ScoreMetric({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {

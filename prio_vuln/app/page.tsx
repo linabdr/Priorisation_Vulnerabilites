@@ -41,7 +41,7 @@ export default async function Page(
               <header className="mb-8 flex justify-between items-end">
                   <div>
                       <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Vulnerability Database</h2>
-                      <p className="text-gray-500 mt-2">Affichage de {resCVE.data.length} CVE(s) sur {resCVE.pagination.total} page(s) selon vos filtres</p>
+                      <p className="text-gray-500 mt-2">Affichage de {resCVE.data.length} CVE(s) sur selon vos filtres</p>
                   </div>
                   <div className="text-sm text-gray-400 font-mono">
                       Dernière mise à jour: {new Date().toLocaleDateString("en-DE")}

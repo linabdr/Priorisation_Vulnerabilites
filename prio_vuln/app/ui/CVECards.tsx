@@ -193,6 +193,15 @@ function formatVulnType(type_vulnerabilite: string){
     if(type_vulnerabilite==="autre"){
         return "Autre type de vulnérabilité"
     }
+    if(type_vulnerabilite==="info_disclosure"){
+        return "Info disclosure"
+    }
+    if(type_vulnerabilite==="dos"){
+        return "DOS"
+    }
+    if(type_vulnerabilite==="default_creds"){
+        return "Default credentials"
+    }
     if(type_vulnerabilite===""){
         return "Erreur !"
     }

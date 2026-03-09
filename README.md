@@ -37,8 +37,18 @@ Les technologies utilisées pour le développement de ce projet sont:
 ``` bash
 git clone https://github.com/linabdr/Priorisation_Vulnerabilites.git
 cd Priorisation_Vulnerabilites/
-sudo docker compose up
 ```
+#### Pour un système OS Linux :  
+``` bash 
+sudo docker compose up
+``` 
+#### Pour un système OS Windows :  
+``` bash 
+docker compose up
+``` 
+*Pour Windows, si une erreur apparait après la commande ci-dessus, ouvrez le fichier entrypoint.sh sous Visual Studio Code et vérifier que l'option 'Select End of Line Sequence' (dans la barre en bas à droite) est en 'LF' et non pas 'CRLF'.*   
+
+Lancer ensuite le lien donné par docker dans votre naviguateur. 
 
 ---
 

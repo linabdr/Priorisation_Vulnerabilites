@@ -6,6 +6,7 @@
 import requests
 import sqlite3
 from datetime import datetime 
+import time
 
 # fonction de mapping CVE → type
 def mapper_type_vulnerabilite(description, cve_id=""):
@@ -136,95 +137,109 @@ kev_list = {item["cveID"] for item in kev_data["vulnerabilities"]} # permet de v
 # nvd data
 print("Fetching CVEs from NVD...")
 
-# param permet de ne selectionner que KEYWORD (ici : ip camera) et pour 20 pages
-params = {
-    "keywordSearch": KEYWORD,
-    "resultsPerPage": nb_result
-}
-response = requests.get(NVD_URL, params=params)
-data = response.json()
+start_index = 0
+results_per_page = 2000
 
-vulnerabilities = data.get("vulnerabilities", []) # liste des CVE
+while True:
 
-for item in vulnerabilities: # pour chaque vulnérabilité
+    # param permet de ne selectionner que KEYWORD (ici : ip camera) et pour 20 pages
+    params = {
+        "keywordSearch": KEYWORD,
+        "resultsPerPage": results_per_page,
+        "startIndex": start_index
+    }
 
-    # on extrait les infos NVD
-    cve = item["cve"]
-    cve_id = cve["id"]
-    description = cve["descriptions"][0]["value"]
-    
-    # Détermination du type de vulnérabilité ici
-    type_vuln = mapper_type_vulnerabilite(description, cve_id)
-    
-    metrics = item["cve"].get("metrics", {})
-    
-    # extraction cvss
-    try:
-        # ici on prend la metriqueV3.1 car c'est lla plus recente, si elle n'existe pas alors on prend les versions plus anciennes
-        severity = ""
+    response = requests.get(NVD_URL, params=params)
+    data = response.json()
 
-        if "cvssMetricV31" in metrics:
-            metric = metrics["cvssMetricV31"][0]
-            cvss = metric["cvssData"].get("baseScore", 0)
-            severity = metric["cvssData"].get("baseSeverity", "")
+    vulnerabilities = data.get("vulnerabilities", [])
 
-        elif "cvssMetricV30" in metrics:
-            metric = metrics["cvssMetricV30"][0]
-            cvss = metric["cvssData"].get("baseScore", 0)
-            severity = metric["cvssData"].get("baseSeverity", "")
+    if not vulnerabilities:
+        break
 
-        elif "cvssMetricV2" in metrics:
-            metric = metrics["cvssMetricV2"][0]
-            cvss = metric["cvssData"].get("baseScore", 0)
-            severity = metric.get("baseSeverity", "")
-            
-    except Exception as e:
-        print(e)
+    for item in vulnerabilities: # pour chaque vulnérabilité
+
+        # on extrait les infos NVD
+        cve = item["cve"]
+        cve_id = cve["id"]
+        description = cve["descriptions"][0]["value"]
+        
+        # Détermination du type de vulnérabilité ici
+        type_vuln = mapper_type_vulnerabilite(description, cve_id)
+        
+        metrics = item["cve"].get("metrics", {})
         cvss = 0.0
+        severity = ""
+        
+        # extraction cvss
+        try:
+            # ici on prend la metriqueV3.1 car c'est lla plus recente, si elle n'existe pas alors on prend les versions plus anciennes
+            if "cvssMetricV31" in metrics:
+                metric = metrics["cvssMetricV31"][0]
+                cvss = metric["cvssData"].get("baseScore", 0)
+                severity = metric["cvssData"].get("baseSeverity", "")
 
-    published_date = item["cve"]["published"]
+            elif "cvssMetricV30" in metrics:
+                metric = metrics["cvssMetricV30"][0]
+                cvss = metric["cvssData"].get("baseScore", 0)
+                severity = metric["cvssData"].get("baseSeverity", "")
 
-    epss_response = requests.get(f"{EPSS_URL}?cve={cve_id}")
-    epss_json = epss_response.json()
+            elif "cvssMetricV2" in metrics:
+                metric = metrics["cvssMetricV2"][0]
+                cvss = metric["cvssData"].get("baseScore", 0)
+                severity = metric.get("baseSeverity", "")
+                
+        except Exception as e:
+            print(e)
+            cvss = 0.0
 
-    if epss_json["data"]:
-        epss = float(epss_json["data"][0]["epss"])
-    else:
-        epss = 0.0
+        published_date = item["cve"]["published"]
 
-    if cve_id in kev_list :
-        kev_status = True
-    else : kev_status = False
+        epss_response = requests.get(f"{EPSS_URL}?cve={cve_id}")
+        epss_json = epss_response.json()
 
-    # Score de priorisation 
+        if epss_json["data"]:
+            epss = float(epss_json["data"][0]["epss"])
+        else:
+            epss = 0.0
 
-    # CVSS = gravité de l'impact --> sur 10 --> 
-    # EPSS = probabilité d’exploitation --> mettre sur 10
-    # KEV  = exploitation réelle confirmée --> mettre sur 10
+        if cve_id in kev_list :
+            kev_status = True
+        else : kev_status = False
 
-    priority_score = (
-        (cvss * 0.4) # 40% du poids car l'impact est à prioriser
-        + (epss * 10 * 0.3) # 30% du poids car la probabilité d'exploitation n'est pas négligeable
-        + (int(kev_status) * 10 * 0.3) # si l'exploitation est confirmée, le poids augmente de 30%
-    )
+        # Score de priorisation 
 
-    # stockage dans la bdd vulnerabilities.db
+        # CVSS = gravité de l'impact --> sur 10 --> 
+        # EPSS = probabilité d’exploitation --> mettre sur 10
+        # KEV  = exploitation réelle confirmée --> mettre sur 10
 
-    cursor.execute("""
-    INSERT OR REPLACE INTO vulnerabilities
-    (cve_id, description, cvss_score, severity ,epss_score, kev_status, published_date, priority_score, type_vulnerabilite)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        cve_id,
-        description,
-        cvss,
-        severity,
-        epss,
-        kev_status,
-        published_date,
-        priority_score,
-        type_vuln  # ← Nouveau champ ajouté
-    ))
+        priority_score = (
+            (cvss * 0.4) # 40% du poids car l'impact est à prioriser
+            + (epss * 10 * 0.3) # 30% du poids car la probabilité d'exploitation n'est pas négligeable
+            + (int(kev_status) * 10 * 0.3) # si l'exploitation est confirmée, le poids augmente de 30%
+        )
+
+        # stockage dans la bdd vulnerabilities.db
+
+        cursor.execute("""
+        INSERT OR REPLACE INTO vulnerabilities
+        (cve_id, description, cvss_score, severity ,epss_score, kev_status, published_date, priority_score, type_vulnerabilite)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            cve_id,
+            description,
+            cvss,
+            severity,
+            epss,
+            kev_status,
+            published_date,
+            priority_score,
+            type_vuln  # ← Nouveau champ ajouté
+        ))
+
+    start_index += results_per_page
+
+    time.sleep(6)
 
     #print(f"Stored {cve_id} | Priority: {round(priority_score,2)}")
 
